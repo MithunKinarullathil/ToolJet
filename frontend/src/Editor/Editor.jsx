@@ -427,6 +427,8 @@ class Editor extends React.Component {
   };
 
   appDefinitionChanged = (newDefinition, opts = {}) => {
+    if (!opts.skipAutoSave && !isEqual(this.state.appDefinition, newDefinition)) this.autoSave(newDefinition);
+
     produce(
       this.state.appDefinition,
       (draft) => {
@@ -434,9 +436,7 @@ class Editor extends React.Component {
       },
       this.handleAddPatch
     );
-    this.setState({ appDefinition: newDefinition }, () => {
-      if (!opts.skipAutoSave) this.autoSave();
-    });
+    this.setState({ appDefinition: newDefinition });
     computeComponentState(this, newDefinition.components);
   };
 
@@ -530,7 +530,7 @@ class Editor extends React.Component {
         appDefinition,
       },
       () => {
-        this.autoSave();
+        this.autoSave(this.state.appDefinition);
       }
     );
   };
@@ -822,17 +822,17 @@ class Editor extends React.Component {
     }
   };
 
-  saveEditingVersion = () => {
+  saveEditingVersion = (appDefinition) => {
     if (this.isVersionReleased()) {
       this.setState({ showCreateVersionModalPrompt: true });
     } else if (!isEmpty(this.state.editingVersion)) {
       this.setState({ isSavingEditingVersion: true, showSaveDetail: true });
-      appVersionService.save(this.state.appId, this.state.editingVersion.id, this.state.appDefinition).then(() => {
+      appVersionService.save(this.state.appId, this.state.editingVersion.id, appDefinition).then(() => {
         this.setState({
           isSavingEditingVersion: false,
           editingVersion: {
             ...this.state.editingVersion,
-            ...{ definition: this.state.appDefinition },
+            ...{ definition: appDefinition },
           },
         });
 
